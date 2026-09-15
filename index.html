@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JARVIS</title>
+  <meta name="theme-color" content="#050810">
+  <title>JARVIS - Voice Assistant</title>
+
   <style>
     * {
       box-sizing: border-box;
@@ -12,96 +14,289 @@
     body {
       margin: 0;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #050810;
+      background:
+        radial-gradient(circle at center, #102b40 0%, #050810 55%);
       color: #eafaff;
       font-family: Arial, sans-serif;
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
     }
 
-    .jarvis {
-      width: min(90%, 380px);
-      padding: 35px 20px;
+    .app {
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      padding: 28px 20px;
       border: 1px solid #164b66;
-      border-radius: 24px;
-      background: #0b1420;
-      box-shadow: 0 0 40px #00bfff18;
+      border-radius: 25px;
+      background: #09111cdd;
+      box-shadow: 0 0 45px #00bfff18;
+    }
+
+    .status {
+      color: #45e6a1;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-bottom: 25px;
     }
 
     .orb {
-      width: 130px;
-      height: 130px;
-      margin: 0 auto 25px;
+      width: 150px;
+      height: 150px;
+      margin: auto;
       border-radius: 50%;
       border: 2px solid #35d9ff;
       display: grid;
       place-items: center;
       color: #35d9ff;
-      font-size: 42px;
+      font-size: 48px;
+      font-weight: bold;
       box-shadow:
         0 0 20px #35d9ff,
-        inset 0 0 25px #35d9ff55;
-      animation: pulse 2s infinite;
+        inset 0 0 30px #35d9ff55;
+      transition: .3s;
+    }
+
+    .orb.listening {
+      animation: pulse 1s infinite;
+      border-color: #45e6a1;
+      color: #45e6a1;
+      box-shadow:
+        0 0 35px #45e6a1,
+        inset 0 0 30px #45e6a155;
     }
 
     @keyframes pulse {
       50% {
-        transform: scale(1.05);
-        box-shadow:
-          0 0 40px #35d9ff,
-          inset 0 0 35px #35d9ff66;
+        transform: scale(1.08);
       }
     }
 
     h1 {
-      letter-spacing: 6px;
-      margin: 10px 0;
+      letter-spacing: 7px;
+      margin: 25px 0 5px;
+      font-size: 28px;
     }
 
-    p {
-      color: #8ba5b8;
-      font-size: 13px;
+    .subtitle {
+      color: #7995aa;
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    .panel {
+      margin-top: 25px;
+      text-align: left;
+    }
+
+    .label {
+      color: #35d9ff;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      margin-bottom: 7px;
+    }
+
+    .message {
+      min-height: 48px;
+      padding: 13px;
+      border: 1px solid #1d3447;
+      border-radius: 12px;
+      background: #060c14;
+      color: #b9cbd8;
+      font-size: 14px;
+      line-height: 1.5;
     }
 
     button {
-      margin-top: 20px;
-      padding: 13px 25px;
+      width: 100%;
+      margin-top: 22px;
+      padding: 15px;
       border: 1px solid #35d9ff;
       border-radius: 30px;
-      background: transparent;
+      background: #0b2635;
       color: #35d9ff;
-      cursor: pointer;
       font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: pointer;
     }
 
     button:hover {
       background: #35d9ff;
       color: #050810;
     }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .hint {
+      margin-top: 18px;
+      color: #647d91;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .footer {
+      margin-top: 25px;
+      color: #40566a;
+      font-size: 10px;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
+
 <body>
 
-  <div class="jarvis">
-    <div class="orb">J</div>
+  <div class="app">
+
+    <div class="status" id="status">● SYSTEM READY</div>
+
+    <div class="orb" id="orb">J</div>
+
     <h1>JARVIS</h1>
-    <p>PERSONAL AI ASSISTANT</p>
-    <button onclick="speak()">ACTIVATE</button>
+    <div class="subtitle">PERSONAL VOICE ASSISTANT</div>
+
+    <div class="panel">
+      <div class="label">YOU SAID</div>
+      <div class="message" id="userText">
+        Press ACTIVATE and speak...
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="label">JARVIS RESPONSE</div>
+      <div class="message" id="jarvisText">
+        Awaiting your command.
+      </div>
+    </div>
+
+    <button id="activateBtn">🎙️ ACTIVATE JARVIS</button>
+
+    <div class="hint">
+      Example commands:<br>
+      “Hello Jarvis” · “What time is it?” · “Tell me a joke”
+    </div>
+
+    <div class="footer">VOICE MODULE • v1.0</div>
+
   </div>
 
   <script>
-    function speak() {
-      if ("speechSynthesis" in window) {
-        const message = new SpeechSynthesisUtterance(
-          "Hello Siddarth. JARVIS interface is online."
-        );
-        message.rate = 0.95;
-        speechSynthesis.speak(message);
+    const activateBtn = document.getElementById("activateBtn");
+    const statusText = document.getElementById("status");
+    const orb = document.getElementById("orb");
+    const userText = document.getElementById("userText");
+    const jarvisText = document.getElementById("jarvisText");
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    let recognition;
+
+    function speak(text) {
+      if (!("speechSynthesis" in window)) return;
+
+      speechSynthesis.cancel();
+
+      const voice = new SpeechSynthesisUtterance(text);
+      voice.rate = 0.95;
+      voice.pitch = 1;
+      speechSynthesis.speak(voice);
+    }
+
+    function replyTo(command) {
+      const text = command.toLowerCase();
+      let reply = "";
+
+      if (text.includes("hello") || text.includes("hi") || text.includes("jarvis")) {
+        reply = "Hello Siddarth. I am listening.";
+      } else if (text.includes("time")) {
+        reply = "The current time is " +
+          new Date().toLocaleTimeString([], {
+            hour: "numeric",
+            minute: "2-digit"
+          });
+      } else if (text.includes("date")) {
+        reply = "Today is " +
+          new Date().toLocaleDateString([], {
+            weekday: "long",
+            month: "long",
+            day: "numeric"
+          });
+      } else if (text.includes("joke")) {
+        reply = "Why did the computer get cold? Because it left its Windows open.";
+      } else if (text.includes("who are you")) {
+        reply = "I am Jarvis, your personal voice assistant interface.";
+      } else if (text.includes("thank")) {
+        reply = "You are welcome, Siddarth.";
       } else {
-        alert("Voice output is not supported in this browser.");
+        reply = "I heard you say: " + command +
+          ". My advanced AI brain is coming in the next mission.";
       }
+
+      jarvisText.textContent = reply;
+      speak(reply);
+    }
+
+    if (!SpeechRecognition) {
+      statusText.textContent = "● BROWSER NOT SUPPORTED";
+      activateBtn.disabled = true;
+      activateBtn.textContent = "VOICE NOT SUPPORTED";
+      jarvisText.textContent =
+        "Voice recognition is not supported in this browser. Try Chrome on Android.";
+    } else {
+      recognition = new SpeechRecognition();
+
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        statusText.textContent = "● LISTENING...";
+        statusText.style.color = "#45e6a1";
+        orb.classList.add("listening");
+        activateBtn.textContent = "🔴 LISTENING...";
+        activateBtn.disabled = true;
+      };
+
+      recognition.onresult = (event) => {
+        const command = event.results[0][0].transcript;
+        userText.textContent = command;
+        replyTo(command);
+      };
+
+      recognition.onerror = (event) => {
+        statusText.textContent = "● ERROR: " + event.error;
+        jarvisText.textContent =
+          "I could not hear you. Please try again.";
+      };
+
+      recognition.onend = () => {
+        statusText.textContent = "● SYSTEM READY";
+        statusText.style.color = "#45e6a1";
+        orb.classList.remove("listening");
+        activateBtn.textContent = "🎙️ ACTIVATE JARVIS";
+        activateBtn.disabled = false;
+      };
+
+      activateBtn.addEventListener("click", () => {
+        userText.textContent = "Listening...";
+        jarvisText.textContent = "Go ahead, Siddarth.";
+        speak("Go ahead, Siddarth.");
+
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (error) {
+            console.log(error);
+          }
+        }, 700);
+      });
     }
   </script>
 
