@@ -5,18 +5,28 @@ const client = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  // Allow requests from your GitHub Pages website
+  // CORS: Allow your GitHub Pages frontend
   res.setHeader(
     "Access-Control-Allow-Origin",
     "https://avengers14673-bit.github.io"
   );
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "POST, OPTIONS"
+  );
+
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type"
+  );
+
+  // Handle browser preflight request
   if (req.method === "OPTIONS") {
-    return res.status(200).end();
+    return res.status(204).end();
   }
 
+  // Only POST is allowed
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Only POST requests are allowed."
@@ -24,11 +34,21 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Check API key
+    if (!process.env.OPENAI_API_KEY) {
+      console.error("OPENAI_API_KEY is missing");
+
+      return res.status(500).json({
+        error: "OpenAI API key is not configured on Vercel."
+      });
+    }
+
     const { message } = req.body || {};
 
+    // Validate message
     if (!message || typeof message !== "string") {
       return res.status(400).json({
-        error: "Please provide a message."
+        error: "Please provide a valid message."
       });
     }
 
@@ -38,8 +58,9 @@ export default async function handler(req, res) {
       });
     }
 
+    // Ask OpenAI
     const response = await client.responses.create({
-      model: "gpt-5",
+      model: "gpt-4o-mini",
       instructions:
         "You are JARVIS, Siddarth's personal AI assistant. " +
         "Be helpful, clear, concise, and friendly. " +
@@ -50,14 +71,14 @@ export default async function handler(req, res) {
     });
 
     return res.status(200).json({
-      reply: response.output_text
+      reply: response.output_text || "I could not generate a response."
     });
 
   } catch (error) {
     console.error("JARVIS API error:", error);
 
     return res.status(500).json({
-      error: "JARVIS is temporarily unavailable."
+      error: "OpenAI request failed. Check Vercel function logs."
     });
   }
 }
