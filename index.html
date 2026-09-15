@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#050810">
-  <title>JARVIS - Voice Assistant</title>
+  <title>JARVIS - AI Voice Assistant</title>
 
   <style>
     * {
@@ -68,6 +68,15 @@
         inset 0 0 30px #45e6a155;
     }
 
+    .orb.thinking {
+      animation: pulse 1s infinite;
+      border-color: #ffd166;
+      color: #ffd166;
+      box-shadow:
+        0 0 35px #ffd166,
+        inset 0 0 30px #ffd16655;
+    }
+
     @keyframes pulse {
       50% {
         transform: scale(1.08);
@@ -107,6 +116,7 @@
       color: #b9cbd8;
       font-size: 14px;
       line-height: 1.5;
+      overflow-wrap: anywhere;
     }
 
     button {
@@ -158,7 +168,7 @@
     <div class="orb" id="orb">J</div>
 
     <h1>JARVIS</h1>
-    <div class="subtitle">PERSONAL VOICE ASSISTANT</div>
+    <div class="subtitle">PERSONAL AI VOICE ASSISTANT</div>
 
     <div class="panel">
       <div class="label">YOU SAID</div>
@@ -177,15 +187,26 @@
     <button id="activateBtn">🎙️ ACTIVATE JARVIS</button>
 
     <div class="hint">
-      Example commands:<br>
-      “Hello Jarvis” · “What time is it?” · “Tell me a joke”
+      Try saying:<br>
+      “Hello Jarvis” · “Explain artificial intelligence” · “Tell me a joke”
     </div>
 
-    <div class="footer">VOICE MODULE • v1.0</div>
+    <div class="footer">AI CORE • VOICE MODULE • v2.0</div>
 
   </div>
 
   <script>
+    // ==========================================
+    // JARVIS CONFIGURATION
+    // ==========================================
+
+    const AI_BACKEND_URL =
+      "https://jarvis-android-red.vercel.app/api/chat";
+
+    // ==========================================
+    // UI ELEMENTS
+    // ==========================================
+
     const activateBtn = document.getElementById("activateBtn");
     const statusText = document.getElementById("status");
     const orb = document.getElementById("orb");
@@ -197,58 +218,150 @@
 
     let recognition;
 
+    // ==========================================
+    // JARVIS VOICE OUTPUT
+    // ==========================================
+
     function speak(text) {
-      if (!("speechSynthesis" in window)) return;
+      if (!("speechSynthesis" in window)) {
+        return;
+      }
 
       speechSynthesis.cancel();
 
       const voice = new SpeechSynthesisUtterance(text);
       voice.rate = 0.95;
       voice.pitch = 1;
+      voice.volume = 1;
+
       speechSynthesis.speak(voice);
     }
 
-    function replyTo(command) {
-      const text = command.toLowerCase();
-      let reply = "";
+    // ==========================================
+    // BASIC LOCAL COMMANDS
+    // ==========================================
 
-      if (text.includes("hello") || text.includes("hi") || text.includes("jarvis")) {
-        reply = "Hello Siddarth. I am listening.";
-      } else if (text.includes("time")) {
-        reply = "The current time is " +
+    function handleLocalCommand(command) {
+      const text = command.toLowerCase().trim();
+
+      if (
+        text === "hello jarvis" ||
+        text === "hi jarvis" ||
+        text === "hello" ||
+        text === "hi"
+      ) {
+        return "Hello Siddarth. I am online and ready.";
+      }
+
+      if (text.includes("what time") || text === "time") {
+        return "The current time is " +
           new Date().toLocaleTimeString([], {
             hour: "numeric",
             minute: "2-digit"
           });
-      } else if (text.includes("date")) {
-        reply = "Today is " +
+      }
+
+      if (text.includes("what date") || text === "date") {
+        return "Today is " +
           new Date().toLocaleDateString([], {
             weekday: "long",
             month: "long",
-            day: "numeric"
+            day: "numeric",
+            year: "numeric"
           });
-      } else if (text.includes("joke")) {
-        reply = "Why did the computer get cold? Because it left its Windows open.";
-      } else if (text.includes("who are you")) {
-        reply = "I am Jarvis, your personal voice assistant interface.";
-      } else if (text.includes("thank")) {
-        reply = "You are welcome, Siddarth.";
-      } else {
-        reply = "I heard you say: " + command +
-          ". My advanced AI brain is coming in the next mission.";
       }
 
-      jarvisText.textContent = reply;
-      speak(reply);
+      return null;
     }
 
+    // ==========================================
+    // REAL AI BACKEND REQUEST
+    // ==========================================
+
+    async function askJarvisAI(message) {
+      try {
+        statusText.textContent = "● AI THINKING...";
+        statusText.style.color = "#ffd166";
+
+        orb.classList.remove("listening");
+        orb.classList.add("thinking");
+
+        activateBtn.disabled = true;
+        jarvisText.textContent = "Thinking...";
+
+        const response = await fetch(AI_BACKEND_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            message: message
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "AI request failed");
+        }
+
+        const reply = data.reply || "I could not generate a response.";
+
+        jarvisText.textContent = reply;
+        speak(reply);
+
+      } catch (error) {
+        console.error("JARVIS AI Error:", error);
+
+        jarvisText.textContent =
+          "My AI brain is unavailable right now. Please check the backend connection.";
+
+        speak("My AI brain is unavailable right now.");
+
+      } finally {
+        statusText.textContent = "● SYSTEM READY";
+        statusText.style.color = "#45e6a1";
+
+        orb.classList.remove("thinking");
+        activateBtn.disabled = false;
+      }
+    }
+
+    // ==========================================
+    // PROCESS SPOKEN COMMAND
+    // ==========================================
+
+    async function processCommand(command) {
+      userText.textContent = command;
+
+      const localReply = handleLocalCommand(command);
+
+      if (localReply) {
+        jarvisText.textContent = localReply;
+        speak(localReply);
+        return;
+      }
+
+      await askJarvisAI(command);
+    }
+
+    // ==========================================
+    // SPEECH RECOGNITION
+    // ==========================================
+
     if (!SpeechRecognition) {
+
       statusText.textContent = "● BROWSER NOT SUPPORTED";
+      statusText.style.color = "#ff6b6b";
+
       activateBtn.disabled = true;
       activateBtn.textContent = "VOICE NOT SUPPORTED";
+
       jarvisText.textContent =
         "Voice recognition is not supported in this browser. Try Chrome on Android.";
+
     } else {
+
       recognition = new SpeechRecognition();
 
       recognition.lang = "en-IN";
@@ -259,19 +372,26 @@
       recognition.onstart = () => {
         statusText.textContent = "● LISTENING...";
         statusText.style.color = "#45e6a1";
+
+        orb.classList.remove("thinking");
         orb.classList.add("listening");
+
         activateBtn.textContent = "🔴 LISTENING...";
         activateBtn.disabled = true;
       };
 
-      recognition.onresult = (event) => {
+      recognition.onresult = async (event) => {
         const command = event.results[0][0].transcript;
-        userText.textContent = command;
-        replyTo(command);
+
+        await processCommand(command);
       };
 
       recognition.onerror = (event) => {
-        statusText.textContent = "● ERROR: " + event.error;
+        console.error("Speech error:", event.error);
+
+        statusText.textContent = "● VOICE ERROR";
+        statusText.style.color = "#ff6b6b";
+
         jarvisText.textContent =
           "I could not hear you. Please try again.";
       };
@@ -279,24 +399,31 @@
       recognition.onend = () => {
         statusText.textContent = "● SYSTEM READY";
         statusText.style.color = "#45e6a1";
+
         orb.classList.remove("listening");
-        activateBtn.textContent = "🎙️ ACTIVATE JARVIS";
-        activateBtn.disabled = false;
+
+        if (!activateBtn.disabled) {
+          activateBtn.textContent = "🎙️ ACTIVATE JARVIS";
+        }
       };
 
       activateBtn.addEventListener("click", () => {
+
         userText.textContent = "Listening...";
         jarvisText.textContent = "Go ahead, Siddarth.";
+
         speak("Go ahead, Siddarth.");
 
         setTimeout(() => {
           try {
             recognition.start();
           } catch (error) {
-            console.log(error);
+            console.log("Recognition start error:", error);
           }
         }, 700);
+
       });
+
     }
   </script>
 
