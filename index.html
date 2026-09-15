@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JARVIS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #050810;
+      color: #eafaff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    .jarvis {
+      width: min(90%, 380px);
+      padding: 35px 20px;
+      border: 1px solid #164b66;
+      border-radius: 24px;
+      background: #0b1420;
+      box-shadow: 0 0 40px #00bfff18;
+    }
+
+    .orb {
+      width: 130px;
+      height: 130px;
+      margin: 0 auto 25px;
+      border-radius: 50%;
+      border: 2px solid #35d9ff;
+      display: grid;
+      place-items: center;
+      color: #35d9ff;
+      font-size: 42px;
+      box-shadow:
+        0 0 20px #35d9ff,
+        inset 0 0 25px #35d9ff55;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      50% {
+        transform: scale(1.05);
+        box-shadow:
+          0 0 40px #35d9ff,
+          inset 0 0 35px #35d9ff66;
+      }
+    }
+
+    h1 {
+      letter-spacing: 6px;
+      margin: 10px 0;
+    }
+
+    p {
+      color: #8ba5b8;
+      font-size: 13px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 13px 25px;
+      border: 1px solid #35d9ff;
+      border-radius: 30px;
+      background: transparent;
+      color: #35d9ff;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #35d9ff;
+      color: #050810;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="jarvis">
+    <div class="orb">J</div>
+    <h1>JARVIS</h1>
+    <p>PERSONAL AI ASSISTANT</p>
+    <button onclick="speak()">ACTIVATE</button>
+  </div>
+
+  <script>
+    function speak() {
+      if ("speechSynthesis" in window) {
+        const message = new SpeechSynthesisUtterance(
+          "Hello Siddarth. JARVIS interface is online."
+        );
+        message.rate = 0.95;
+        speechSynthesis.speak(message);
+      } else {
+        alert("Voice output is not supported in this browser.");
+      }
+    }
+  </script>
+
+</body>
+</html>
